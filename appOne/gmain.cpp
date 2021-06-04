@@ -1,299 +1,209 @@
+#if 1
 #include"libOne.h"
+
+struct DATA {
+    int INIT = 0;
+    int PLAY = 1;
+    int RESULT = 2;
+    int state = INIT;
+};
+
+void loadImages(struct DATA* d) {}
+void init(struct DATA* d) {}
+void play(struct DATA* d) {}
+void result(struct DATA* d) {}
+void draw(struct DATA* d) {}
+
 void gmain() {
-	window(1920, 1080, full);
-	colorMode(HSV);
-	angleMode(DEGREES); //角度を使うから
-	float hue = 0;		//角度
-	float satu = 255;  //鮮やかさ
-	float value = 255;	//明るさ
-	while (notQuit) {
-		if (isPress(KEY_D)&&hue<360) { hue += 5; }
-		if (isPress(KEY_A)&&hue>0) { hue += -5; }
-		if (isTrigger(KEY_W) && hue < 360) { hue += 5; }
-		if (isTrigger(KEY_S) && hue > 0) { hue += -5; }
-
-		if (isPress(KEY_R) && satu < 255) { satu += 5; }
-		if (isPress(KEY_F) && satu > 0) { satu += -5; }
-		if (isPress(KEY_T) && value < 255) { value += 5; }
-		if (isPress(KEY_G) && value > 0) { value += -5; }
-
-		clear(0, 0, 0);
-		fill(hue, satu, value);
-		textSize(120);
-		text((let)"hue=" + hue, 600, 400);
-		text((let)"satu=" + satu, 600, 600);
-		text((let)"value=" + value, 600, 800);
-		int num = 128;
-		float angle = hue / num;
-		for (int i = 0; i < num; i++) {
-			float px = cos(angle * i) * 200;
-			float py = -sin(angle * i) * 200;
-			fill(angle * i, satu, value);
-			noStroke();
-			circle(1500+px,540+ py, 50);
-		}
-	}
+    window(800, 450);
+    struct DATA d;
+    loadImages(&d);
+    while (notQuit) {
+        if      (d.state == d.INIT  ) { init(&d); }
+        else if (d.state == d.PLAY  ) { play(&d); }
+        else if (d.state == d.RESULT) { result(&d); }
+        draw(&d);
+    }
 }
 
+#else
 
-
-
-#ifdef _SORT
 #include"libOne.h"
-void gmain() {
-	window(1100, 1000);
-	const int num = 20;
-	int score[num];
-	int r, c;			//rが基準、cが比較対象
-	for (int i = 0; i < num; i++) {
-		score[i] = random() % 1001;
-	}
-	while(notQuit){
-		clear(60);
-		if (isTrigger(KEY_A)) {
-			for (int i = 0; i < num; i++) {
-				score[i] = random() % 1001;
-			}
-		}
-		if (isTrigger(KEY_D)) {
-			for (r = 0; r < num - 1; r++) {
-				for (c = r + 1; c < num; c++) {
-					if (score[r] < score[c]) {
-						int w = score[r];
-						score[r] = score[c];
-						score[c] = w;
 
-					}
-				}
-			}
-		}
-		for (int i = 0; i < num; i++) {
-			print(score[i]);
-			rect(100, 50 * i, score[i], 40);
-		}
-	}
- }
-#endif
+struct HAND {
+    int hand;
+    int img[3];
+    int heartImg;
+    float px;
+    float py;
+    struct COLOR color;
+    float angle;
+    int life;
+};
 
+struct RESULT_TEXT {
+    const char* str;
+    float px;
+    float py;
+    float size;
+    struct COLOR color;
+};
 
-#ifdef _SHOOT
-#include"libOne.h"
-void gmain() {
-	window(1920, 1080, full);
-	struct PLAYER {
-		float px, py, w, h, vx,ofsY;
-	};
-	struct BULLET{
-		float px, py, w, h, vy;
-		int hp = 0;
-	};
-	struct PLAYER p;
-	p.px = width / 2;
-	p.py = height - 150;
-	p.w = 100;
-	p.h = 200;
-	p.vx = 10;
-	p.ofsY = -100;
-	const int numBullets = 10;
-	struct BULLET b [ numBullets ];
-	for (int i = 0; i < numBullets; i++) {
-		b[i].px = p.px;
-		b[i].py = p.py;
-		b[i].w = 20;
-		b[i].h = 40;
-		b[i].vy = -10;
-	}
-	while (notQuit) {
-		if (isPress(KEY_A)) { p.px += -p.vx; }
-		if (isPress(KEY_D)) { p.px += p.vx; }
-		if (isTrigger(KEY_SPACE)) {
-			for (int i = 0; i < numBullets; i++) {
+struct DATA {
+    int INIT = 0;
+    int PLAY = 1;
+    int RESULT = 2;
+    int state = INIT;
 
-				if (b[i].hp == 0) {
+    struct COLOR pink = { 255,200,200 };
+    struct COLOR white = { 255,255,255 };
+    struct COLOR red = { 255,0,0 };
+    struct COLOR blue = { 0,0,200 };
+    int GU = 0;
+    int CHOKI = 1;
+    int PA = 2;
+    struct HAND player;
+    struct HAND pc;
+    struct RESULT_TEXT resultText;
+};
 
-					b[i].hp = 1;
-					b[i].px = p.px;
-					b[i].py = p.py + p.ofsY;
-					i = numBullets;
-				}
-			}
-		}
+void drawHands(struct DATA* d);
+void drawResultText(struct DATA* d);
 
-		for (int i = 0; i < numBullets; i++) {
-			if (b[i].hp > 0) {
-				b[i].py += b[i].vy;
-				//ウィンドウの外に出た
-				if (b[i].py < -b[i].h) {
-					b[i].hp = 0;
-				}
-			}
-		}
-		clear();
-		rectMode(CENTER);
-		rect(p.px, p.py, p.w, p.h);
-		for (int i = 0; i < numBullets; i++) {
-			if (b[i].hp > 0) { 
-				rect(b[i].px, b[i].py, b[i].w, b[i].h);
-			}
-		}
+void loadImages(struct DATA* d) {
+    d->player.img[d->GU] = loadImage("assets\\playerGu.png");
+    d->player.img[d->CHOKI] = loadImage("assets\\playerChoki.png");
+    d->player.img[d->PA] = loadImage("assets\\playerPa.png");
+    d->player.heartImg = loadImage("assets\\heart.png");
+    d->pc.img[d->GU] = loadImage("assets\\pcGu.png");
+    d->pc.img[d->CHOKI] = loadImage("assets\\pcChoki.png");
+    d->pc.img[d->PA] = loadImage("assets\\pcPa.png");
+    d->pc.heartImg = d->player.heartImg;
+}
+void init(struct DATA* d) {
+    d->player.hand = d->GU;
+    d->player.px = 250;
+    d->player.py = 225;
+    d->player.color = d->white;
+    d->player.life = 3;
+    d->player.angle = 0;
 
-	}
+    d->pc.hand = d->GU;
+    d->pc.px = 550;
+    d->pc.py = 225;
+    d->pc.color = d->white;
+    d->pc.life = 3;
+    d->pc.angle = 0;
+
+    d->resultText.str = "勝ち";
+    d->resultText.color = d->red;
+    d->resultText.px = 255;
+    d->resultText.py = 320;
+    d->resultText.size = 0;
+    
+    drawHands(d);
+
+    //ステート切り替え
+    d->state = d->PLAY;
+}
+void play(struct DATA* d) {
+    if (!isTrigger(KEY_A) && !isTrigger(KEY_S) && !isTrigger(KEY_D)) {
+        return;
+    }
+    //プレイヤーの手
+    if (isTrigger(KEY_A)) { d->player.hand = d->GU; }
+    if (isTrigger(KEY_S)) { d->player.hand = d->CHOKI; }
+    if (isTrigger(KEY_D)) { d->player.hand = d->PA; }
+    //ＰＣの手
+    d->pc.hand = random() % 3;
+    //結果判定
+    if (d->player.hand == d->pc.hand) {
+        //あいこ
+        d->player.color = d->white;
+        d->pc.color = d->white;
+    }
+    else if ((d->player.hand + 1) % 3 == d->pc.hand) {
+        //プレイヤー勝ち
+        d->pc.life--;
+        d->player.color = d->pink;
+        d->pc.color = d->white;
+    }
+    else {
+        //ＰＣ勝ち
+        d->player.life--;
+        d->player.color = d->white;
+        d->pc.color = d->pink;
+    }
+    //描画
+    drawHands(d);
+    //ステート切り替え
+    if (d->player.life == 0 || d->pc.life == 0) {
+        if (d->player.life == 0) {
+            d->resultText.str = "負け";
+            d->resultText.color = d->blue;
+        }
+        d->state = d->RESULT;
+    }
+}
+void result(struct DATA* d) {
+    //負けた手が回転しながら落ちていく
+    if (d->player.life == 0) {
+        d->player.py += 1;
+        d->player.angle += 0.003f;
+    }
+    else {
+        d->pc.py += 1;
+        d->pc.angle += -0.003f;
+    }
+    //結果文字拡大
+    if (d->resultText.size < 180) {
+        d->resultText.size += 10;
+    }
+    //描画
+    drawHands(d);
+    drawResultText(d);
+    //ステート切り替え
+    if (isTrigger(KEY_SPACE)) {
+        d->state = d->INIT;
+    }
 }
 
-
-#endif 
-
-
-#ifdef _FACE
-#include"libOne.h"
-#include"face.h"
-
-void gmain() {
-	window(1920, 1080, full);
-	float px = width / 2;
-	float py = height / 2;
-	float angle = 0;
-	float ofsX = 100;
-	float ofsY = 100;
-	int sw = 1;
-	while (notQuit) {
-		ofsX = width / 2 - mouseX;
-		ofsY = height / 2 -mouseY;
-		if (isTrigger(KEY_SPACE)) {sw = 1 - sw;	}
-
-		angle += 0.01f;
-		clear(60, 120, 240);
-		strokeWeight(5);
-		for (int i = -5; i <= 5; i++) {
-			if (sw == 1) {
-				roundFace(px+ofsX*i, py+ofsY*i);
-			}
-			else {
-				squareFace(px+ofsX*i, py+ofsY*i, angle);
-			}
-		}
-	}
+void drawHand(struct HAND* hand) {
+    //手
+    rectMode(CENTER);
+    imageColor(hand->color);
+    int i = hand->hand;
+    image(hand->img[i], hand->px, hand->py, hand->angle);
+    //ハート
+    imageColor(255, 0, 0);
+    for (i = 0; i < hand->life; i++) {
+        image(hand->heartImg, hand->px + 50 * (i - 1), hand->py - 100);
+    }
 }
-#endif
-
-
-#ifdef _HPGAUGE
-#include"libOne.h"
-void gmain() {
-	window(1920, 1080, full);
-	//データ
-	struct COLOR green = { 0,255,0 };
-	struct COLOR yellow = { 255,255,0 };
-	struct COLOR red = { 255,0,0 };
-	struct COLOR color = green;
-
-	int hpMax = 500;
-	int hp = hpMax;
-	int hpWaring = hpMax * 0.3;
-	int hpDanger = hpMax * 0.1;
-
-	float px = 700;
-	float py = 200;
-	float h = 60;
-	while (notQuit) {
-		if (isTrigger(KEY_SPACE)) { hp = hpMax; }
-		if (hp > 0) { hp -= 2; }
-
-		if (hp > hpWaring) {
-			color = green;
-		}
-		else if (hp > hpDanger) {
-			color = yellow;
-		}
-		else {
-			color = red;
-		}
-		clear(74, 84, 89);
-		fill(128);
-		rect(px, py, hpMax, h);
-		fill(color);
-		rect(px, py, hp, h);
-		if (hp <= 0) {
-			textSize(100);
-			fill(255, 0, 0);
-			text("Game Over", 700, 400);
-		}
-	}
+void drawHands(struct DATA* d) {
+    clear(180);
+    drawHand(&d->player);
+    drawHand(&d->pc);
 }
-#endif
-
-#ifdef _LIFE
-#include"libOne.h"
-void gmain() {
-	window(1920, 1080,full);
-	//データ
-	int life = 5;
-	float px = 700;
-	float py = 200;
-	float radius = 50;
-	float space = 100;
-	while (notQuit) {
-		//データ更新
-		if (isTrigger(KEY_A)) { life--; }
-		if (isTrigger(KEY_D)) { life++; }
-		//描画
-	clear(74, 84, 89);
-	
-	fill(255, 255, 0);
-	print((let)"life = " + life);
-
-	strokeWeight(20);
-	stroke(255);
-	//whileバージョン
-	int i = 0;
-	fill(255, 200, 200);
-	while (i < life) {
-		float offsetX = space * i;
-		circle(px + offsetX, py, radius * 2);
-		i++;
-	}
-	//forバージョン
-	fill(160, 200, 240);
-	for(int i = 0;i < life;i++){
-		float offsetX = space * i;
-		float offsetY = space * 2;
-		circle(px + offsetX, py + offsetY, radius * 2);
-	}
-
-	}
+void drawResultText(struct DATA* d) {
+    textSize(d->resultText.size);
+    fill(d->resultText.color);
+    text(d->resultText.str, d->resultText.px, d->resultText.py);
 }
-#endif
 
-#ifdef _MOVE
-#include"libOne.h"
 void gmain() {
-	window(1920, 1080, full);
-	float px = 1920 / 2;
-	float py = 1080 / 2;
-	float vx = 10;
-	float radius = 150;
-	float len = radius / 1.4142f * 2;
-	float sw = radius / 8;
-	float angle = 0;
-	float angleSpeed = 0.03f;
-	while (notQuit) {
-		px += vx;
-		angle += angleSpeed;
-		if (px < 0 || px > 1920) {
-			vx = -vx;
-			angleSpeed = -angleSpeed;
-		}
-		clear(60);
-		strokeWeight(sw);
-		stroke(255, 0, 0);
-		circle(px, py, radius * 2);
-		rectMode(CENTER);
-		rect(px, py, len, len, angle);
-		strokeWeight(sw * 4);
-		point(px, py);
-		strokeWeight(sw);
-		line(1920 / 2, 0, px, py);
-
-	}
+    //ウィンドウ表示
+    window(800, 450);
+    //データ用意
+    struct DATA d;
+    //画像読み込み
+    loadImages(&d);
+    //メインループ
+    while (notQuit) {
+        //ステート制御
+        if      (d.state == d.INIT  ) { init(&d); }
+        else if (d.state == d.PLAY  ) { play(&d); }
+        else if (d.state == d.RESULT) { result(&d); }
+    }
 }
 #endif
